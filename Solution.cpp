@@ -1,140 +1,124 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-/*
-	Class Abhimanyu to simulate fighting of Abhimanyu in Chakravyuha
-	properties:
-		max_power : starting power or maximum power of Abhimanyu
-		current_power : 
-		skips : that can be skipped by Abhimanyu
-		recharges : number of times Abhimanyu can recharge to its full power
-*/
+class Abhimanyu {
+private:
+    int maxPower;
+    int currentPower;
+    int remainingSkips;
+    int remainingRecharges;
 
-class abhimanyu{
-	private:
-		int max_power;					
-		int current_power;		
-		int skips;
-		int recharges;		
+    bool canCrossCircles(int position, int prevAction, vector<int>& chakravyuha, map<vector<int>, bool>& dp) {
+        if (currentPower < 0) {
+            return false;
+        }
+        if (position == chakravyuha.size()) {
+            return true;
+        }
 
-		/*
-			pos : current circle of Abhimanyu
-			prev : previous enemy is killed(1) or skipped(0)
-			chakravyuha : enemy's power
-			dp : to store current state's value to be reused 
-		*/
-		bool helper(int pos, int prev, vector<int>& chakravyuha, map<vector<int>, int>& dp){
-			if(current_power<0){
-				return 0;
-			}
-			if(pos==chakravyuha.size()){
-				return 1;
-			}
-			vector<int> state={pos, current_power, skips, recharges, prev};
-			if(dp.find(state)!=dp.end()){
-				return dp[state];
-			}
+        vector<int> state = { position, currentPower, remainingSkips, remainingRecharges, prevAction };
+        if (dp.find(state) != dp.end()) {
+            return dp[state];
+        }
 
-			bool ans=false;
-			// skipping current enemy if skips are remaining
-			if(skips>0){
-				skips--;
-				ans|=helper(pos+1, 0, chakravyuha, dp);
-				skips++;
-			}
+        bool canCross = false;
+	    
+        if (remainingSkips > 0) {
+            remainingSkips--;
+            canCross |= canCrossCircles(position + 1, 0, chakravyuha, dp);
+            remainingSkips++;
+        }
 
-			//calculating enemy power to battle
-			int enemy_power=chakravyuha[pos];
-			if(3==pos || 7==pos){
-				if(prev){
-					enemy_power+=chakravyuha[pos-1]/2;
-				}
-				else{
-					enemy_power+=chakravyuha[pos-1];
-				}
-			}
+        int enemyPower = chakravyuha[position];
+        if (position == 3 || position == 7) {
+            if (prevAction) {
+                enemyPower += chakravyuha[position - 1] / 2;
+            } else {
+                enemyPower += chakravyuha[position - 1];
+            }
+        }
 
-			//battle enemy if there is enough power else recharge
-			if(current_power>=enemy_power){
-				current_power-=enemy_power;
-				ans|=helper(pos+1, 1, chakravyuha, dp);
-				current_power+=enemy_power;
-			}
-			else if(recharges>0){
-				int initial_power=current_power;
-				current_power=max_power;
-				recharges--;
-				ans|=helper(pos, prev, chakravyuha, dp);
-				recharges++;
-				current_power=initial_power;
-			}
+        if (currentPower >= enemyPower) {
+            currentPower -= enemyPower;
+            canCross |= canCrossCircles(position + 1, 1, chakravyuha, dp);
+            currentPower += enemyPower;
+        } else if (remainingRecharges > 0) {
+            int initialPower = currentPower;
+            currentPower = maxPower;
+            remainingRecharges--;
+            canCross |= canCrossCircles(position, prevAction, chakravyuha, dp);
+            remainingRecharges++;
+            currentPower = initialPower;
+        }
 
-			return dp[state]=ans;
-		}				
-	
-	public:
-		abhimanyu(int power, int skips, int recharges){
-			this->max_power=power;
-			this->current_power=power;
-			this->skips=skips;
-			this->recharges=recharges;
-		}
+        return dp[state] = canCross;
+    }
 
+public:
+    Abhimanyu(int initialPower, int skipsAllowed, int rechargesAllowed) {
+        maxPower = initialPower;
+        currentPower = initialPower;
+        remainingSkips = skipsAllowed;
+        remainingRecharges = rechargesAllowed;
+    }
 
-		bool simulate(vector<int> chakravyuha){                     // simulate abhimanyu's escape to check if he can cross circles
-			map<vector<int>, int> dp;
-			return helper(0, 1, chakravyuha, dp);
-		}
+    bool canEscape(vector<int>& chakravyuha) {
+        map<vector<int>, bool> dp;
+        return canCrossCircles(0, 1, chakravyuha, dp);
+    }
 };
 
 int main() {
-	int max_power;
-	int skips;
-	int recharges;	
-	vector<int> chakravyuha;
-	while(true){
-		cout<<"Enter Abhimanyu's power : ";
-		cin>>max_power;
-		if(max_power<=0){
-			cout<<"power needs to be positive constant"<<endl;
-			continue;
-		}
-		break;
-	}
-	while(true){
-		cout<<"Enter how many times Abhimanyu can skip enemy : ";
-		cin>>skips;
-		if(skips<0){
-			cout<<"skips needs to be non negative constant"<<endl;
-			continue;
-		}
-		break;
-	}
-	while(true){
-		cout<<"Enter how many times Abhimanyu can recharge : ";
-		cin>>recharges;
-		if(recharges<0){
-			cout<<"recharges needs to be non negative constant"<<endl;
-			continue;
-		}
-		break;
-	}
+    int initialPower, skipsAllowed, rechargesAllowed;
+    vector<int> chakravyuha;
 
-	cout<<"Enter 11 enemy power at each circle"<<endl;
-	for(int i=0;i<11;i++){
-		int enemy;
-		cin>>enemy;
-		chakravyuha.push_back(enemy);
-	}
+    do {
+        cout << "Enter Abhimanyu's initial power (positive integer): ";
+        cin >> initialPower;
+    } while (initialPower <= 0);
 
-	abhimanyu obj=abhimanyu(max_power, skips, recharges);
+    do {
+        cout << "Enter how many times Abhimanyu can skip enemies (non-negative integer): ";
+        cin >> skipsAllowed;
+    } while (skipsAllowed < 0);
 
-	if(obj.simulate(chakravyuha)){
-		cout<<"Abhimanyu can cross 11 circles"<<endl;
-	}
-	else{
-		cout<<"Abhimanyu can not cross 11 circles"<<endl;
-	}
-	
-	return 0;
+    do {
+        cout << "Enter how many times Abhimanyu can recharge (non-negative integer): ";
+        cin >> rechargesAllowed;
+    } while (rechargesAllowed < 0);
+
+    cout << "Enter enemy powers at each of the 11 circles:\n";
+    for (int i = 0; i < 11; ++i) {
+        int enemyPower;
+        cin >> enemyPower;
+        chakravyuha.push_back(enemyPower);
+    }
+
+    Abhimanyu abhimanyuObj(initialPower, skipsAllowed, rechargesAllowed);
+
+    if (abhimanyuObj.canEscape(chakravyuha)) {
+        cout << "Abhimanyu can successfully escape the Chakravyuha.\n";
+    } else {
+        cout << "Abhimanyu cannot escape the Chakravyuha.\n";
+    }
+
+    return 0;
 }
+
+
+// Test Case
+// 1. 
+// Max Power: 20
+// Skips: 3
+// Recharges: 1
+// Enemy Powers: [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+
+// Output: Abhimanyu cannot escape the Chakravyuha
+
+// 2.
+// Max Power: 20
+// Skips: 3
+// Recharges: 2
+// Enemy Powers: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+
+// Output: Abhimanyu can successfully escape the Chakravyuha.
