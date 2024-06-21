@@ -3,10 +3,7 @@ using namespace std;
 
 class Abhimanyu {
 private:
-    int maxPower;
-    int currentPower;
-    int remainingSkips;
-    int remainingRecharges;
+    int maxPower,currentPower,remainingSkips,remainingRecharges;
 
     bool canCrossCircles(int position, int prevAction, vector<int>& chakravyuha, map<vector<int>, bool>& dp) {
         if (currentPower < 0) {
